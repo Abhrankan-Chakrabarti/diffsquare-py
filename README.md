@@ -9,6 +9,7 @@ This is the Python counterpart to the Rust crate [`diffsquare`](https://crates.i
 * Supports large integers up to \~64 bits practically.
 * Optional verbose output showing approximate factors in scientific notation.
 * Configurable precision and iteration print interval for verbose output.
+* Control the starting iteration offset with `--start`.
 * Suppress verbose output with `--quiet`.
 
 ## Installation
@@ -57,3 +58,10 @@ Set iteration print interval (default is 1,000,000):
 ```bash
 python factor.py -n 5959 -i 100000
 ```
+
+Start from a custom iteration offset:
+
+```bash
+python factor.py -n 5959 -s 1000
+```
+

@@ -6,9 +6,8 @@ from gmpy2 import mpz, isqrt, is_square
 
 def to_sci(n, prec=30):
     """
-    Convert integer n to scientific notation string with `prec` digits after decimal.
-    Only converts if number has more digits than `prec`.
-    Example: to_sci(123456789, prec=6) -> "1.234568e+08"
+    Convert integer n to scientific notation string only if it exceeds the given precision.
+    Example: to_sci(123456789, prec=6) -> "1.234568e+8"
     """
     n = mpz(n)
     s = str(n)
@@ -40,29 +39,33 @@ def to_sci(n, prec=30):
 
     mant_str = str(mant_int).rjust(sig_len, "0")
     mantissa = mant_str[0] + "." + mant_str[1:]  # prec digits after decimal
-    exp_str = f"{exp:+02d}"
+    exp_str = f"{exp:+d}"  # produces +8, +9, +12 etc. (no leading zero)
     sign = "-" if neg else ""
     return f"{sign}{mantissa}e{exp_str}"
 
-def predict_factor(N, quiet=False, prec=30, print_interval=1000000):
+def predict_factor(N, quiet=False, prec=30, print_interval=1000000, start_iter=0):
     N = mpz(N)
     y0 = isqrt(N)
     if y0 * y0 < N:
         y0 += 1
 
+    # Adjust starting iteration (start_iter must be >= 0)
+    y0 += start_iter
     D = y0 * y0 - N
-    k = 0
-    while True:
+    k = start_iter
+
+    # Terminate when current y >= N (mirrors Rust a < n)
+    while y0 + (k - start_iter) < N:
         if is_square(D):
             x = isqrt(D)
-            y = y0 + k
+            y = y0 + (k - start_iter)
             p = y - x
             q = y + x
             if p * q == N:
                 return p, q, k
 
         if not quiet and k % print_interval == 0 and k > 0:
-            y = y0 + k
+            y = y0 + (k - start_iter)
             approx_x = isqrt(D)
             approx_p = y - approx_x
             approx_q = y + approx_x
@@ -73,7 +76,10 @@ def predict_factor(N, quiet=False, prec=30, print_interval=1000000):
             )
 
         k += 1
-        D += 2 * y0 + 2 * k - 1
+        # Note: we increment k before updating D so the recurrence matches (see discussion)
+        D += 2 * y0 + 2 * (k - start_iter) - 1
+
+    return None
 
 def main():
     parser = argparse.ArgumentParser(description="Fermat's Difference of Squares Factorization (Python)")
@@ -81,7 +87,13 @@ def main():
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress progress output")
     parser.add_argument("-p", "--prec", type=int, default=30, help="Digits to show for approximate factors (default=30)")
     parser.add_argument("-i", "--interval", type=int, default=1000000, help="Print interval for progress (default=1e6)")
+    parser.add_argument("-s", "--start", type=int, default=0, help="Starting iteration offset (default=0)")
     args = parser.parse_args()
+
+    # Validate start (must be non-negative)
+    if args.start is not None and args.start < 0:
+        print("Error: starting iteration (--start) must be non-negative.", file=sys.stderr)
+        sys.exit(2)
 
     if args.mod:
         data = args.mod.strip()
@@ -98,9 +110,17 @@ def main():
         N = mpz(data)
 
     start = time.perf_counter()
-    p, q, k = predict_factor(N, quiet=args.quiet, prec=args.prec, print_interval=args.interval)
+    result = predict_factor(
+        N, quiet=args.quiet, prec=args.prec,
+        print_interval=args.interval, start_iter=args.start
+    )
     end = time.perf_counter()
 
+    if result is None:
+        print(f"❌ Failed to factor {N}.")
+        sys.exit(1)
+
+    p, q, k = result
     print(f"\n✅ Factors of {N}:")
     print(f"p = {p}")
     print(f"q = {q}")
