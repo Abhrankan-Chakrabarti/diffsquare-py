@@ -1,78 +1,59 @@
 # diffsquare-py
 
-Python implementation of Fermat's Difference of Squares factorization algorithm. This is the Python equivalent of the Rust `diffsquare` crate.
+A Python implementation of **Fermat's Difference of Squares Factorization**.
+This is the Python counterpart to the Rust crate [`diffsquare`](https://crates.io/crates/diffsquare).
+
+## Features
+
+* Factors integers efficiently using Fermat's method.
+* Supports large integers up to \~64 bits practically.
+* Optional verbose output showing approximate factors in scientific notation.
+* Configurable precision and iteration print interval for verbose output.
+* Suppress verbose output with `--quiet`.
 
 ## Installation
 
-Clone the repository and install dependencies:
+Clone the repository:
 
 ```bash
 git clone https://github.com/Abhrankan-Chakrabarti/diffsquare-py.git
 cd diffsquare-py
-pip install -r requirements.txt
 ```
 
-Dependencies:
+Requires Python 3 and [`gmpy2`](https://pypi.org/project/gmpy2/):
 
-* `gmpy2`
+```bash
+pip install gmpy2
+```
 
 ## Usage
 
-Factor an RSA modulus:
+Factor a number via stdin:
 
 ```bash
-echo 10546581863473198687 | python factor.py
+echo 5959 | python factor.py
 ```
 
-Or specify with `-n`:
+Or using the `-n` argument:
 
 ```bash
-python factor.py -n 10546581863473198687
+python factor.py -n 5959
 ```
 
-### Options
-
-* `-n, --mod`   Modulus to factor (decimal or hex with 0x)
-* `-q, --quiet` Suppress progress output
-* `-p, --prec`  Digits to show for approximate factors (default=30)
-* `-i, --interval` Print interval for progress (default=1e6)
-
-## Examples
-
-### Example 1: Default precision (`--prec=30`)
+Suppress verbose progress:
 
 ```bash
-$ echo 10546581863473198687 | python factor.py
-Iteration: 86000000 p ≈ 2581237283 q ≈ 4085862983
-
-✅ Factors of 10546581863473198687:
-p = 2578536577
-q = 4090142431
-Iterations = 86789371
-⏱️  Execution time: 103.220617 seconds
+python factor.py -n 5959 --quiet
 ```
 
-Since both `p` and `q` are under 30 digits, they are shown in full decimal form.
-
----
-
-### Example 2: Reduced precision (`--prec=6`)
+Set scientific notation precision (default is 30):
 
 ```bash
-$ echo 10546581863473198687 | python factor.py -p 6
-Iteration: 86000000 p ≈ 2.581237e+09 q ≈ 4.085863e+09
-
-✅ Factors of 10546581863473198687:
-p = 2578536577
-q = 4090142431
-Iterations = 86789371
-⏱️  Execution time: 103.220617 seconds
+python factor.py -n 5959 -p 6
 ```
 
-With precision limited to 6 digits, the intermediate approximations are shown in scientific notation.
+Set iteration print interval (default is 1,000,000):
 
----
-
-## License
-
-MIT
+```bash
+python factor.py -n 5959 -i 100000
+```
